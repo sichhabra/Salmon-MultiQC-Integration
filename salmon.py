@@ -29,7 +29,7 @@ class MultiqcModule(BaseMultiqcModule):
                 href='http://combine-lab.github.io/salmon/',
                 info="is a tool for quantifying the expression of transcripts using RNA-seq data.")
 
-        #Intializing Variables
+        #Intializing Variables for GC Bias, Sequence Bias.
         self.salmon_meta = dict()
         self.salmon_gc_lower = {}
         self.salmon_gc_middle = {}
@@ -52,6 +52,7 @@ class MultiqcModule(BaseMultiqcModule):
         self.heat_map_seq_3_values = []
         self.heat_map_seq_5_values = []
         self.sample_names = []
+        scale_factor = 4.45
 
         # Parse meta information. JSON win!
         for f in self.find_log_files('salmon/meta'):
@@ -76,27 +77,27 @@ class MultiqcModule(BaseMultiqcModule):
                     #Lower section of reads
                     lower_values = OrderedDict()
                     for j in range(len(gc_bias[0])):
-                        lower_values[j*4.45] = gc_bias[0][j] * weights[0]
-                        average_values[j*4.45] = average_values.get(j,0) + lower_values[j*4.45]
+                        lower_values[j*scale_factor] = gc_bias[0][j] * weights[0]
+                        average_values[j*scale_factor] = average_values.get(j,0) + lower_values[j*scale_factor]
                     self.salmon_gc_lower[sample_name] = lower_values
 
                     #Middle section of reads
                     middle_values = OrderedDict()
                     for j in range(len(gc_bias[1])):
-                        middle_values[j*4.45] = gc_bias[1][j] * weights[1]
-                        average_values[j*4.45] = average_values.get(j, 0) + middle_values[j*4.45]
+                        middle_values[j*scale_factor] = gc_bias[1][j] * weights[1]
+                        average_values[j*scale_factor] = average_values.get(j, 0) + middle_values[j*scale_factor]
                     self.salmon_gc_middle[sample_name] = middle_values
 
                     #Upper section of reads
                     upper_values = OrderedDict()
                     for j in range(len(gc_bias[2])):
-                        upper_values[j*4.45] = gc_bias[2][j] * weights[2]
-                        average_values[j*4.45] = average_values.get(j, 0) + upper_values[j*4.45]
+                        upper_values[j*scale_factor] = gc_bias[2][j] * weights[2]
+                        average_values[j*scale_factor] = average_values.get(j, 0) + upper_values[j*scale_factor]
                     self.salmon_gc_upper[sample_name] = upper_values
 
                     #Averaging the values over all three section of reads
                     for j in range(len(gc_bias[0])):
-                        average_values[j*4.45] /= 3
+                        average_values[j*scale_factor] /= 3
 
 
                     self.heat_map_gc_bias_lower_values.append(lower_values.values())
@@ -162,7 +163,7 @@ class MultiqcModule(BaseMultiqcModule):
 
             self.salmon_meta[sample_name] = json.loads(f['f'])
 
-        ############### Configs for distribution plots #################
+        ############### Configs for GC Bias, Sequence Bias and Heatmap distribution plots #################
         pconfig_GCBias_Begin = {
             'smooth_points': 500,
             'id': 'salmon_plot',
@@ -306,7 +307,7 @@ class MultiqcModule(BaseMultiqcModule):
             'tt_label': '<b>{point.x:,.0f} bp</b>: {point.y:,.0f}',
         }
 
-        ########### Distribution Plots ##################################
+        ########### Distribution Plots GC Bias and Sequence Bias##################################
         self.add_section(name='GC Bias First Row', plot = linegraph.plot(self.salmon_gc_lower, pconfig_GCBias_Begin))
         self.add_section(name='GC Bias Middle Row', plot=linegraph.plot(self.salmon_gc_middle, pconfig_GCBias_Middle))
         self.add_section(name='GC Bias Last Row', plot=linegraph.plot(self.salmon_gc_upper, pconfig_GCBias_Last))
